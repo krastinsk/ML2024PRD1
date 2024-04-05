@@ -54,7 +54,55 @@ def getValidTestValue():
             matchesCondition = True
     return testValue
 
-def generateGameTree(number: int, scoreSetter: int = 1):
+# v2 - pievienots pēc pārstrukturēšanas
+def heuristicScoreAssign(tree: treelib.Tree, parentNodeRFID: int, scoreSetter: int, level: int, divisor: int):
+    """
+    input: treelib.Tree, int, int, int, int, int
+    output: int
+    
+    Ģenerē heiristisko vērtību balstoties uz to, kāds ir gājiens, un vai ja gājiens (tikai dalīšana ar 3) spiež pretiniekam veikt nevēlamu gājienu.
+    """
+    node = tree.get_node(parentNodeRFID)
+    aiScores = None
+    score = 0
+    finalScore = None
+    
+    if scoreSetter == 1:
+        aiScores = (-2, 3) # spēlētājs maksimizē
+    elif scoreSetter == -1:
+        aiScores = (2, -3) # intelekts maksimizē
+    else:
+        print("bad scoreSetter.")
+        return
+        
+    # -gājieni kuros dala ar trīs, pieskaitīt (punktu skaitu * 1.3)
+    # -pretējā gadījumā, (ps * 0.7)
+    if((level == 0) or (level % 2 == 0)):
+        if divisor == 2:
+            score = aiScores[0]*(0.7*scoreSetter)*-1
+        elif divisor == 3:
+            score = aiScores[1]*(1.3*scoreSetter)*-1
+            lookAhead = node.data["value"]
+            if lookAhead % 3 == 0:
+                lookAhead = lookAhead / 3
+                if lookAhead % 3 != 0 and lookAhead % 2 == 0:
+                    score = score*1.5
+
+    elif((level == 1) or (level % 3 == 0)):
+        if divisor == 2:
+            score = aiScores[0]*(0.7*scoreSetter)
+        elif divisor == 3:
+            score = aiScores[1]*(1.3*scoreSetter)
+            lookAhead = node.data["value"]
+            if lookAhead % 3 == 0:
+                lookAhead = lookAhead / 3
+                if lookAhead % 3 != 0 and lookAhead % 2 == 0:
+                    score = score*1.5
+    
+    finalScore = node.tag + round(float(score),2)
+    return round(finalScore, 2)
+
+def generateGameTree(number: int, scoreSetter: int):
     """
     input: int, int
     output: treelib.tree
@@ -86,9 +134,9 @@ def generateGameTree(number: int, scoreSetter: int = 1):
     
     # structs
     libraryTree = treelib.Tree()
-    libraryTree.create_node(0, usedNodeRFID, None, {"value":number, "divisor":0})
+    libraryTree.create_node(0, usedNodeRFID, None, {"value":number, "divisor":0, "score":0})
     
-    # func
+    # func (REWRITTEN)
     db2 = lambda variableNumber: variableNumber / 2
     db3 = lambda variableNumber: variableNumber / 3
     
@@ -96,10 +144,10 @@ def generateGameTree(number: int, scoreSetter: int = 1):
     
     if variableNumber % 2 == 0:
         usedNodeRFID += 1
-        libraryTree.create_node(aiScores[0], usedNodeRFID, 0, {"value":db2(variableNumber), "divisor":2})
+        libraryTree.create_node(heuristicScoreAssign(libraryTree,0,scoreSetter,levelIteration,2), usedNodeRFID, 0, {"value":db2(variableNumber), "divisor":2, "score":-2*scoreSetter})
     if variableNumber % 3 == 0:
         usedNodeRFID += 1
-        libraryTree.create_node(aiScores[1], usedNodeRFID, 0, {"value":db3(variableNumber), "divisor":3})
+        libraryTree.create_node(heuristicScoreAssign(libraryTree,0,scoreSetter,levelIteration,3), usedNodeRFID, 0, {"value":db3(variableNumber), "divisor":3, "score":3*scoreSetter})
     
     while(loopCondition):
         levelIteration += 1
@@ -113,27 +161,27 @@ def generateGameTree(number: int, scoreSetter: int = 1):
             if variableNumber % 2 == 0 and variableNumber > 0:
                 usedNodeRFID += 1
                 if levelIteration % 2 == 0:
-                    theScore = item.tag + (aiScores[0]*-1)
+                    theScore = item.data["score"] + (aiScores[0]*-1)
                 else:
-                    theScore = item.tag + (aiScores[0])
-                libraryTree.create_node(theScore, usedNodeRFID, item.identifier, {"value":db2(variableNumber), "divisor":2})
+                    theScore = item.data["score"] + (aiScores[0])
+                libraryTree.create_node(heuristicScoreAssign(libraryTree,item.identifier,scoreSetter,levelIteration,2), usedNodeRFID, item.identifier, {"value":db2(variableNumber), "divisor":2, "score":theScore})
                 loopCondition = True
             else:
                 usedNodeRFID += 1
 
             if variableNumber % 3 == 0 and variableNumber > 0:
-                usedNodeRFID += 1
                 if levelIteration % 2 == 0:
-                    theScore = item.tag + (aiScores[1]*-1)
+                    theScore = item.data["score"] + (aiScores[1]*-1)
                 else:
-                    theScore = item.tag + (aiScores[1])
-                
-                libraryTree.create_node(theScore, usedNodeRFID, item.identifier, {"value":db3(variableNumber), "divisor":3})
+                    theScore = item.data["score"] + (aiScores[1])
+                usedNodeRFID += 1
+                libraryTree.create_node(heuristicScoreAssign(libraryTree,item.identifier,scoreSetter,levelIteration,3), usedNodeRFID, item.identifier, {"value":db3(variableNumber), "divisor":3, "score":theScore})
                 loopCondition = True
             else:
                 usedNodeRFID += 1
                 
     print(libraryTree.show(stdout=False))
+    usedNodeRFID = 0 # v2 - reset global to 0
     return libraryTree
 
 def minimax(tree, node_id, maximizing_player: int = 1):
@@ -220,7 +268,7 @@ def shouldScriptOutputToGraphviz(tree: treelib.Tree):
     Tiešsaistes rīks koda attēlošanai: https://dreampuf.github.io/GraphvizOnline/
     """
     ans = input(f"output graphviz file ? Y/N\n")
-    if ans == "Y" or "y":
+    if ans == "y":
         tree.to_graphviz("DOT_code_for_graph.txt")
     else:
         return
@@ -236,6 +284,14 @@ def printAllNodesButNicer(tree: treelib.Tree):
     lines = [str(item) + "\n" for item in nodeList]
     result = "".join(lines)
     print(result)
+    
+# v2 - no gājiena saraksta izvada MI gājienus
+def filterAIMoves(moveList: list, scoreSetter: int):
+    if(scoreSetter == 1):
+        return list(reversed(moveList))[1::2]
+    elif(scoreSetter == -1):
+        return list(reversed(moveList))[::2]
+
 
 # darbības =======================================================================
 # NOŅEMT JA NETIEK LIETOTS TESTĒŠANAI
@@ -245,11 +301,12 @@ def printAllNodesButNicer(tree: treelib.Tree):
 testVal, scoreSetter = testDataCollect() #savāc datus
 gameTree = generateGameTree(testVal, scoreSetter)
 minimax_result = minimax(gameTree, 0, scoreSetter)
-print(f"minimax_best_value: {minimax_result[0]}, path: {minimax_result[1]}")
+print(f"minimax_best_value: {minimax_result[0]}, AIpath: {filterAIMoves(minimax_result[1], scoreSetter)}")
 
-#printAllNodesButNicer(gameTree)
+printAllNodesButNicer(gameTree) #izprintē virsotnes sarakstā (atkļūdošanai)
 
-shouldScriptOutputToGraphviz(gameTree)
+#shouldScriptOutputToGraphviz(gameTree) #izvada failu ar DOT kodu (atkļūdošanai)
+
 input() #palaižot kā skriptu uz datora, ļauj nospiest pogu lai pabeigtu skriptu
 """
 
@@ -259,3 +316,4 @@ input() #palaižot kā skriptu uz datora, ļauj nospiest pogu lai pabeigtu skrip
 # 12204
 # 14112 <--- rekomendācija
 # 13608
+# 15552
