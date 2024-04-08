@@ -184,10 +184,10 @@ def generateGameTree(number: int, scoreSetter: int):
     usedNodeRFID = 0 # v2 - reset global to 0
     return libraryTree
 
-def minimax(tree, node_id, maximizing_player: int = 1):
+def minimax(tree: treelib.tree, node_id: int, maximizing_player: int = 1):
     """
     input: treelib.tree, int, int
-    output: [int, list]
+    output: [int, list, tree]
     
     Minimax algoritms. Pārmeklē uzģenerēto koku pilnā apmērā.
     Ņemot vērā iespējamos galējos rezultātus, atrod visticamāko
@@ -207,7 +207,7 @@ def minimax(tree, node_id, maximizing_player: int = 1):
     
     if node in tree.leaves():
         movestack = []
-        return node.tag, movestack
+        return node.tag, movestack, tree
     
     #https://treelib.readthedocs.io/en/latest/treelib.html#module-treelib.tree
     #is_branch(nid)
@@ -215,22 +215,24 @@ def minimax(tree, node_id, maximizing_player: int = 1):
     
     if maximizing_player == 1:
         for child_id in tree.is_branch(node_id):
-            childValue, movestack = minimax(tree, child_id, -1)
+            childValue, movestack, tree = minimax(tree, child_id, -1)
             childValues.append((childValue, child_id, movestack))
         best_value = max(childValues, key=lambda x: x[0])
+        #print(f"best value: {best_value}")
         curNode = tree.get_node(best_value[1])
         actionstack = best_value[2]
         actionstack.append(curNode.data["divisor"])
-        return best_value[0], actionstack
+        return best_value[0], actionstack, tree
     elif maximizing_player == -1:
         for child_id in tree.is_branch(node_id):
-            childValue, movestack = minimax(tree, child_id, 1)
+            childValue, movestack, tree = minimax(tree, child_id, 1)
             childValues.append((childValue, child_id, movestack))
         best_value = min(childValues, key=lambda x: x[0])
+        #print(f"best value: {best_value}")
         curNode = tree.get_node(best_value[1])
         actionstack = best_value[2]
         actionstack.append(curNode.data["divisor"])
-        return best_value[0], actionstack
+        return best_value[0], actionstack, tree
     
 def testDataCollect():
     """
@@ -288,9 +290,34 @@ def printAllNodesButNicer(tree: treelib.Tree):
 # v2 - no gājiena saraksta izvada MI gājienus
 def filterAIMoves(moveList: list, scoreSetter: int):
     if(scoreSetter == 1):
-        return list(reversed(moveList))[1::2]
+        glubby = list(reversed(moveList))[1::2]
+        glubby.reverse()
+        return glubby
     elif(scoreSetter == -1):
-        return list(reversed(moveList))[::2]
+        glubby = list(reversed(moveList))[::2]
+        glubby.reverse()
+        return glubby
+    
+# v3 - paņemt apakškoku, ja spēlētājs veic neracionālu gājienu
+def retraceRationalMoveset(tree: treelib.tree, maximizing_player: int = 1, movesToFollow: list = None):
+    """
+    input: treelib.Tree, int, list
+    output: list
+    
+    Pieņemot iespēju, ka spēlētājs var veikt neracionālu gājienu, šis algoritms iegūst apakškoku spēles kokam atkarīgi no tā, kādi gājieni ir veikti.
+    """
+    node_id = 0
+    for num in movesToFollow:
+        if num == 2:
+            node_id = node_id * 2 + 1
+        elif num == 3:
+            node_id = node_id * 2 + 2
+        else:
+            raise ValueError("Invalid number in the list. Only 2 and 3 are allowed.")
+    new_tree = treelib.Tree(tree.subtree(node_id), deep=True)
+    bestVal, optimalMoveset, unused = minimax(new_tree, node_id, maximizing_player)
+    return optimalMoveset
+
 
 
 # darbības =======================================================================
@@ -301,7 +328,7 @@ def filterAIMoves(moveList: list, scoreSetter: int):
 testVal, scoreSetter = testDataCollect() #savāc datus
 gameTree = generateGameTree(testVal, scoreSetter)
 minimax_result = minimax(gameTree, 0, scoreSetter)
-print(f"minimax_best_value: {minimax_result[0]}, AIpath: {filterAIMoves(minimax_result[1], scoreSetter)}")
+print(f"minimax_best_value: {minimax_result[0]}, AIpath: {filterAIMoves(minimax_result[1], scoreSetter)},\n All Moves: {minimax_result[1]}")
 
 printAllNodesButNicer(gameTree) #izprintē virsotnes sarakstā (atkļūdošanai)
 
