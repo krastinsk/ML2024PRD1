@@ -32,18 +32,18 @@ if %errorlevel% neq 0 (
     echo Treelib is already installed.
 )
 
-REM Task 4: Check if PySide2 is installed
-pip show PySide2 > nul 2>&1
+REM Task 4: Check if PySide6 is installed
+pip show PySide6 > nul 2>&1
 if %errorlevel% neq 0 (
-    echo PySide2 is not installed. Installing...
-    pip install PySide2 > nul 2>&1
+    echo PySide6 is not installed. Installing...
+    pip install PySide6 > nul 2>&1
     if %errorlevel% neq 0 (
-        echo Failed to install PySide2.
+        echo Failed to install PySide6.
         exit /b
     )
-    echo PySide2 is now installed.
+    echo PySide6 is now installed.
 ) else (
-    echo PySide2 is already installed.
+    echo PySide6 is already installed.
 )
 
 REM Task 5: Run game.py
