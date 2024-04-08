@@ -1,6 +1,6 @@
 import random
 import sys
-import Alfa_Beta
+#import Alfa_Beta
 import minimax
 from PySide6.QtCore import *
 from PySide6.QtGui import *
