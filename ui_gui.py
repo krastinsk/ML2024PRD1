@@ -95,8 +95,8 @@ class Ui_Dialog(object):
         self.first_player = None
         self.ai_algorith = None
         self.current_number = None
-        self.user_score = 0
-        self.computer_score = 0
+        self.user_score = int(0)
+        self.computer_score = int(0)
 
         if not Dialog.objectName():
             Dialog.setObjectName(u"Dialog")
@@ -395,14 +395,14 @@ class Ui_Dialog(object):
         self.startchoiceD.setText("")
         self.startchoiceE.setText("")
         self.userGRP.setTitle(QCoreApplication.translate("Dialog", u"Lietot\u0101js", None))
-        self.curNumU.setText(QCoreApplication.translate("Dialog", u"34", None))
+        self.curNumU.setText(QCoreApplication.translate("Dialog", u"0", None))
         self.curScoreU.setText(QCoreApplication.translate("Dialog", u"0", None))
         self.UnumberLBL.setText(QCoreApplication.translate("Dialog", u"Skaitlis", None))
         self.UscoreLBL.setText(QCoreApplication.translate("Dialog", u"Punkti", None))
         self.divTwoU.setText(QCoreApplication.translate("Dialog", u"2", None))
         self.divThreeU.setText(QCoreApplication.translate("Dialog", u"3", None))
         self.computerGRP.setTitle(QCoreApplication.translate("Dialog", u"Dators", None))
-        self.curNumC.setText(QCoreApplication.translate("Dialog", u"34", None))
+        self.curNumC.setText(QCoreApplication.translate("Dialog", u"0", None))
         self.curScoreC.setText(QCoreApplication.translate("Dialog", u"0", None))
         self.CnumberLBL.setText(QCoreApplication.translate("Dialog", u"Skaitlis", None))
         self.CscoreLBL.setText(QCoreApplication.translate("Dialog", u"Punkti", None))
@@ -475,6 +475,8 @@ class Ui_Dialog(object):
     @Slot()
     def switch_to_algoChoice(self):
         self.stackedWidget.setCurrentIndex(0)
+        self.user_score = 0
+        self.computer_score = 0
 
     @Slot()
     def switch_to_startChoice(self):
@@ -512,6 +514,7 @@ class Ui_Dialog(object):
         
     @Slot()
     def update_curNum(self,newCurnNum):
+        newCurnNum = int(newCurnNum)
         if newCurnNum > 10:
             self.curNumU.setText(QCoreApplication.translate("Dialog", str(newCurnNum), None))
             self.curNumC.setText(QCoreApplication.translate("Dialog", str(newCurnNum), None))
@@ -519,11 +522,22 @@ class Ui_Dialog(object):
             self.end_game()
 
     @Slot()
+    def update_curScoreU(self,newCurScoreU):
+        print(newCurScoreU)
+        self.curScoreU.setText(QCoreApplication.translate("Dialog", str(newCurScoreU), None))
+
+    @Slot()
+    def update_curScoreC(self,newCurScoreC):
+        self.curScoreC.setText(QCoreApplication.translate("Dialog", str(newCurScoreC), None))
+        
+
+    @Slot()
     def divTwoU_pressed(self):
         if self.player_turn == "player":
             
             if self.current_number % 2 == 0:
                 self.user_score += 2
+                self.update_curScoreU(self.user_score)
                 self.current_number = self.current_number / 2
                 self.update_curNum(self.current_number)
                 self.player_turn = "bot"
@@ -541,6 +555,7 @@ class Ui_Dialog(object):
             
             if self.current_number % 3 == 0:
                 self.user_score += 3
+                self.update_curScoreU(self.user_score)
                 self.current_number //= 3
                 self.update_curNum(self.current_number)
                 self.player_turn = "bot"
@@ -564,6 +579,7 @@ class Ui_Dialog(object):
             else:
                 self.computer_score += 3
 
+            self.update_curScoreC(self.computer_score)
             self.current_number //= divisor
             self.update_curNum(self.current_number)
             self.player_turn = "player"
@@ -572,64 +588,6 @@ class Ui_Dialog(object):
             self.showErrorMessage("Error", "Dators veica nederīgu izvēli, mēģini vēlreiz.")
             self.switch_to_algoChoice()
                 
-
-    # @Slot()
-    # def divTwoC_pressed(self):
-    #     if self.player_turn == "player":
-            
-    #         if self.current_number % 2 == 0:
-    #             self.user_score += 2
-    #             self.current_number = self.current_number / 2
-    #             self.update_curNum(self.current_number)
-
-    #         else:
-    #             self.showErrorMessage("Error", "Nederīga izvēle, mēģini vēlreiz.")
-    #             self.switch_to_algoChoice
-
-    #         self.player_turn = "bot"
-    #     else:
-    #         self.showErrorMessage("Error", "It is not your turn.")
-    # @Slot()
-    # def divThreeC_pressed(self):
-    #     if self.player_turn == "player":
-            
-    #         if self.current_number % 2 == 0:
-    #             self.user_score += 2
-    #             self.current_number = self.current_number / 2
-    #             self.update_curNum(self.current_number)
-
-    #         else:
-    #             self.showErrorMessage("Error", "Nederīga izvēle, mēģini vēlreiz.")
-    #             self.switch_to_algoChoice
-
-    #         self.player_turn = "bot"
-    #     else:
-    #         self.showErrorMessage("Error", "It is not your turn.")
-        
-    # while current_number > 10:
-
-    #     if player_turn == "player":
-    #         divisor = int(input(f"Izvēlies, ar ko dalīt skaitli {current_number} (2 vai 3): "))
-    #     else:
-    #         divisor = bot_choice(current_number)
-    #         print(f"Bot chooses to divide {current_number} by {divisor}")
-    #     if divisor not in (2, 3):
-    #         print("Var dalīt tikai ar 2 vai 3!")
-    #         continue
-    #     if current_number % divisor == 0:
-    #         if divisor == 2:
-    #             player2_points += 2
-    #         else:
-    #             player1_points += 3
-    #         current_number //= divisor
-    #         print(f"Punkti: Spēlētājs 1 - {player1_points}, Spēlētājs 2 - {player2_points}")
-    #     else:
-    #         print("Nederīga izvēle, mēģini vēlreiz.")
-    #         break  # End the game if the number cannot be divided evenly
-    #     if player_turn == "player":
-    #         player_turn = "bot"
-    #     else:
-    #         player_turn = "player"
 
     @Slot()
     def end_game(self):
@@ -689,3 +647,4 @@ if __name__ == "__main__":
     Dialog.show()
     sys.exit(app.exec_())
     main()
+   
