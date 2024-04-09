@@ -7,6 +7,8 @@ minimax.py - Edgars, Normunds</br>
 ui_gui.py - Kalvis (file unused)</br>
 
 <h1>Instrukcija</h1>
+
+!!!!!!! Šobrīd palaišana darbojas tikai uz Edgara datora, jo ir problēmas ar pitona un paku versijām.
 Palaišana notiek ar initialize.bat</br>
 Fails pārbauda vai ir ielādēts pitons 3 un vajadzīgās pakotnes.</br>
 Tad tiek palaists game.py, kurā šobrīd ir izvietota lietotāja grafiskā saskarne un strādā tikai spēle ar minimax algoritmu.</br>
